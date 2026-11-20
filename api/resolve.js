@@ -2,7 +2,7 @@
 const UA =
   "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36";
 
-const isSL = (h) => /(^|\.)(safelinku\.[a-z.]+|sfl\.gl)$/i.test(h) || /safelinku/i.test(h);
+const isSL = (h) => /(^|\.)(safelinku\.[a-z.]+|safelinkku\.com|sfl\.(gl|ink)|tutwuri\.id)$/i.test(h) || /safelinku/i.test(h);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 class Jar {
