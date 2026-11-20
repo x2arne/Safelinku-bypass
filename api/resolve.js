@@ -2,6 +2,7 @@
 const UA =
   "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36";
 
+const isSL = (h) => /(^|\.)(safelinku\.[a-z.]+|sfl\.gl)$/i.test(h) || /safelinku/i.test(h);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 class Jar {
@@ -29,7 +30,7 @@ async function get(url, jar, referer) {
     if (res.status >= 300 && res.status < 400 && loc) {
       cur = new URL(loc, cur).href;
       // keluar dari domain safelinku = hasil akhir
-      if (!/safelinku/i.test(new URL(cur).hostname)) return { final: cur };
+      if (!isSL(new URL(cur).hostname)) return { final: cur };
       continue;
     }
     return { html: await res.text(), url: cur };
@@ -73,13 +74,13 @@ function sniffUrl(html) {
     const m = html.match(p);
     if (m) {
       const u = m[1].replace(/\\\//g, "/");
-      if (!/safelinku/i.test(u)) return u;
+      if (!isSL(new URL(u).hostname)) return u;
     }
   }
   for (const m of html.matchAll(/atob\(["']([A-Za-z0-9+/=]{12,})["']\)/g)) {
     try {
       const d = Buffer.from(m[1], "base64").toString();
-      if (/^https?:\/\//.test(d) && !/safelinku/i.test(d)) return d;
+      if (/^https?:\/\//.test(d) && !isSL(new URL(d).hostname)) return d;
     } catch {}
   }
   return null;
@@ -92,7 +93,7 @@ export default async function handler(req, res) {
   try {
     target = new URL(raw);
     if (!/^https?:$/.test(target.protocol)) throw 0;
-    if (!/(^|\.)safelinku\.[a-z.]+$/i.test(target.hostname)) {
+    if (!isSL(target.hostname)) {
       return res.status(400).json({ ok: false, error: "Hanya link safelinku yang didukung." });
     }
   } catch {
@@ -138,7 +139,7 @@ export default async function handler(req, res) {
       jar.add(post);
 
       const loc = post.headers.get("location");
-      if (loc && !/safelinku/i.test(new URL(loc, endpoint).hostname)) {
+      if (loc && !isSL(new URL(loc, endpoint).hostname)) {
         return res.json({ ok: true, url: new URL(loc, endpoint).href });
       }
 
@@ -146,7 +147,7 @@ export default async function handler(req, res) {
       let json = null;
       try { json = JSON.parse(text); } catch {}
 
-      if (json && json.url && !/safelinku/i.test(json.url)) {
+      if (json && json.url && !isSL(new URL(json.url, origin).hostname)) {
         return res.json({ ok: true, url: json.url });
       }
       if (json && json.url) {
